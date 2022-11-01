@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reactive Vanilla JS test</title>
+  <script>
+    window.ReactiveSystem = {
+      state: new Proxy({},
+        {
+          set(target, property, value) {
+            target[property] = value;
+            window.ReactiveSystem.runOnChangeHandler(property);
+          },
+        }
+      ),
+      onChangeHandler: new Map(),
+      addOnChangeHandler(property, handler) {
+        window.ReactiveSystem.onChangeHandler.set(property, handler);
+      },
+      runOnChangeHandler(property) {
+        const handler = window.ReactiveSystem.onChangeHandler.get(property);
+        handler?.(window.ReactiveSystem.state[property]);
+      },
+      addState(property, state, onChangeHandler) {
+        window.ReactiveSystem.state[property] = state;
+        window.ReactiveSystem.addOnChangeHandler(property, onChangeHandler);
+        window.ReactiveSystem.runOnChangeHandler(property);
+      },
+    };
+  </script>
+</head>
+
+<body>
+  <h1>Reactive Vanilla JS test</h1>
+  <p>Votre age :</p>
+  <input id="ageInput" type="text">
+  <h2 id="yourAge"></h2>
+  <h2 id="plusTenYears"></h2>
+  <h2 id="plusTwentyYears"></h2>
+  <h2 id="plusThirtyYears"></h2>
+
+  <p>Pour tester la réactivité, ouvrez la console dans les outils de développement et changez la valeur suivante :</p>
+  <code>ReactiveSystem.state.age = 21 // entrez le nombre que vous voulez :)</code>
+  <script>
+    const renderAgeThings = (value) => {
+      const rawAge = +value
+      const age = isNaN(rawAge) ? 0 : rawAge
+      const agePlusTen = `Dans 10 ans vous aurez ${age + 10} ans`
+      const agePlusTwenty = `Dans 20 ans vous aurez ${age + 20} ans`
+      const agePlusThirty = `Dans 30 ans vous aurez ${age + 30} ans`
+
+      document.getElementById('yourAge').innerHTML = `Vous avez ${age} ans`
+      document.getElementById('plusTenYears').innerHTML = agePlusTen
+      document.getElementById('plusTwentyYears').innerHTML = agePlusTwenty
+      document.getElementById('plusThirtyYears').innerHTML = agePlusThirty
+
+      document.getElementById('ageInput').value = age.toString()
+    }
+
+    window.ReactiveSystem.addState('age', '', renderAgeThings)
+
+    document.getElementById('ageInput').addEventListener('input', (e) => {
+      window.ReactiveSystem.state.age = e.target.value
+    })
+  </script>
+</body>
+
+</html>
